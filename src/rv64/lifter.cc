@@ -234,6 +234,13 @@ public:
         abs_op = irb.CreateXor(abs_op, sign_op);
         StoreFp(rvi->rd, irb.CreateBitCast(abs_op, f.Type(irb.getContext())));
     }
+
+    void LiftCTPOP(const FrvInst* rvi, Facet f) {
+        auto res = irb.CreateUnaryIntrinsic(llvm::Intrinsic::ctpop,
+                                            LoadGp(rvi->rs1, f) );
+        StoreGp(rvi->rd, res);
+    }
+
     void LiftFminmax(const FrvInst* rvi, llvm::Intrinsic::ID id, Facet f) {
         auto res = irb.CreateBinaryIntrinsic(id, LoadFp(rvi->rs1, f), LoadFp(rvi->rs2, f));
         StoreFp(rvi->rd, res);
@@ -525,6 +532,7 @@ bool Lifter::Lift(const Instr& inst) {
     case FRV_FCVTSD: StoreFp(rvi->rd, irb.CreateFPTrunc(LoadFp(rvi->rs1, Facet::F64), irb.getFloatTy())); break;
     case FRV_FCVTDS: StoreFp(rvi->rd, irb.CreateFPExt(LoadFp(rvi->rs1, Facet::F32), irb.getDoubleTy())); break;
     case FRV_FCLASSD: LiftFclass(rvi, Facet::I64); break;
+    case FRV_CPOP: LiftCTPOP(rvi, Facet::I64); break;
     }
 
     SetIP(inst.end());
